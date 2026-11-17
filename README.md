@@ -74,6 +74,7 @@ python -m unittest discover tests/
 ## 🏛️ Standards Ecosystem
 
 - **Official Web Portal:** [https://odcs.in/](https://odcs.in/)
+- **Official Telegram Community:** [https://t.me/opendigitalcontinuity](https://t.me/opendigitalcontinuity)
 - **ODCS Specification Repository:** [github.com/Veyra-Programming/open-digital-continuity-standard-](https://github.com/Veyra-Programming/open-digital-continuity-standard-)
 - **Star & Haven Dual Engine:** [github.com/Veyra-Programming/star-haven](https://github.com/Veyra-Programming/star-haven)
 - **Star Programming Language:** [github.com/Veyra-Programming/star-language](https://github.com/Veyra-Programming/star-language)
