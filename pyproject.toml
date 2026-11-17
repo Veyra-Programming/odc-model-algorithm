@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "odc-model-algorithm"
+version = "2.0.0"
+description = "Reference Implementation of the Open Digital Continuity (ODC) 4-Layer Model and Open Digital Adaptation (ODA) Algorithm"
+readme = "README.md"
+authors = [
+  { name = "Anirudha Puthraya", email = "veyraprograminglanguage@gmail.com" },
+  { name = "Veyra-Programming", email = "veyraprograminglanguage@gmail.com" }
+]
+license = { text = "Apache-2.0" }
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Topic :: System :: Distributed Computing",
+  "Topic :: Software Development :: Libraries",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.16"
+]
+keywords = ["odcs", "digital-continuity", "crdt", "merkle-tree", "write-ahead-log", "zero-intent-loss", "offline-first", "state-machine"]
+
+[project.urls]
+Homepage = "https://github.com/Veyra-Programming/odc-model-algorithm"
+Documentation = "https://github.com/Veyra-Programming/open-digital-continuity-standard-"
+Repository = "https://github.com/Veyra-Programming/odc-model-algorithm.git"
+Issues = "https://github.com/Veyra-Programming/odc-model-algorithm/issues"
+
+[project.scripts]
+odc = "cli:main"
