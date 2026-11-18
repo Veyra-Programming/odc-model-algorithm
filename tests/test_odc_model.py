@@ -4,19 +4,18 @@ Tests all 4 layers, Merkle WAL, CRDT join semi-lattices, and ZIL latency guarant
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-import unittest
-import time
 import os
-import sys
 import shutil
+import sys
 import tempfile
+import time
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from odc.core import ODCModel, ContinuityInvariantError
-from odc.layer1_wal import canonical_json, compute_sha256, MerkleTree, MerkleWAL
-from odc.layer2_crdt import PNCounter, AddWinsORSet, LWWRegister, CRDTMeshNode
-from odc.layer3_telemetry import CarrierTelemetryProbe, TelemetryMode
+from odc.core import ODCModel
+from odc.layer1_wal import MerkleTree, MerkleWAL, canonical_json
+from odc.layer2_crdt import AddWinsORSet, PNCounter
 from odc.layer4_zil import ZeroIntentLossEngine
 
 

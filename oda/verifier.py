@@ -4,21 +4,24 @@ Runs formal stress-testing and verifies zero intent loss, commutativity, and rep
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-import time
 import random
-from typing import Dict, Any, List
+import time
+from typing import Any, Dict, List
+
 from odc.core import ODCModel
-from .algorithm import ODAAlgorithm, OperationalState
-from .controller import ODANetworkSimulator, CarrierEnvironment
+
+from .algorithm import ODAAlgorithm
+from .controller import CarrierEnvironment, ODANetworkSimulator
 
 
 class VerificationReport:
     """Formal verification report summarizing invariant test results."""
+
     def __init__(self):
         self.total_actions = 0
         self.total_dropped = 0
         self.max_latency_ms = 0.0
-        self.min_latency_ms = float('inf')
+        self.min_latency_ms = float("inf")
         self.avg_latency_ms = 0.0
         self.carrier_transitions = 0
         self.reconciled_actions = 0
@@ -37,7 +40,7 @@ class VerificationReport:
             "carrier_transitions": self.carrier_transitions,
             "reconciled_actions": self.reconciled_actions,
             "merkle_wal_verified": self.merkle_wal_verified,
-            "crdt_consistency_verified": self.crdt_consistency_verified
+            "crdt_consistency_verified": self.crdt_consistency_verified,
         }
 
 
@@ -45,6 +48,7 @@ class ODAMathematicalVerifier:
     """
     Formal invariant verifier proving mathematical correctness of the ODC/ODA architecture.
     """
+
     @staticmethod
     def verify_resilience(iterations: int = 1000) -> VerificationReport:
         report = VerificationReport()
@@ -58,7 +62,7 @@ class ODAMathematicalVerifier:
             CarrierEnvironment.STARLINK_SATELLITE,
             CarrierEnvironment.TOTAL_BLACKOUT,
             CarrierEnvironment.UNDERGROUND_SUBWAY,
-            CarrierEnvironment.CELLULAR_4G_5G
+            CarrierEnvironment.CELLULAR_4G_5G,
         ]
 
         for i in range(iterations):
@@ -102,17 +106,17 @@ class ODAMathematicalVerifier:
 
         # Verify Merkle WAL
         report.merkle_wal_verified = model.wal.verify_integrity()
-        report.crdt_consistency_verified = (model.mesh_node.counter.value() == iterations)
+        report.crdt_consistency_verified = model.mesh_node.counter.value() == iterations
 
         report.max_latency_ms = max(latencies)
         report.min_latency_ms = min(latencies)
         report.avg_latency_ms = sum(latencies) / len(latencies)
 
         report.passed = (
-            report.total_dropped == 0 and
-            report.merkle_wal_verified and
-            report.crdt_consistency_verified and
-            report.max_latency_ms <= 16.66
+            report.total_dropped == 0
+            and report.merkle_wal_verified
+            and report.crdt_consistency_verified
+            and report.max_latency_ms <= 16.66
         )
 
         return report

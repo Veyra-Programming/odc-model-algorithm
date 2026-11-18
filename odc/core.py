@@ -4,26 +4,30 @@ Implements the 4-layer state space: S = <D1, C2, T3, Z4>
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Callable
 import time
+from typing import Any, Dict, Optional, Tuple
+
 from .layer1_wal import MerkleWAL, canonical_json, compute_sha256
-from .layer2_crdt import PNCounter, AddWinsORSet, LWWRegister, CRDTMeshNode
-from .layer3_telemetry import CarrierTelemetryProbe, TelemetryMode
+from .layer2_crdt import CRDTMeshNode
+from .layer3_telemetry import CarrierTelemetryProbe
 from .layer4_zil import ZeroIntentLossEngine, ZeroIntentLossReceipt
 
 
 class ContinuityInvariantError(Exception):
     """Raised when an ODCS mathematical invariant is violated."""
+
     pass
 
 
 class ContinuityIntegrityError(Exception):
     """Raised when cryptographic verification or tamper detection fails."""
+
     pass
 
 
 class DurableRecord:
     """Base class for tamper-evident durable records in the ODC model."""
+
     def __init__(self, record_type: str, data: Dict[str, Any]):
         self.record_type = record_type
         self.data = data
@@ -35,7 +39,7 @@ class DurableRecord:
             "record_type": self.record_type,
             "data": self.data,
             "created_at_ns": self.created_at_ns,
-            "seal_hash": self.seal_hash
+            "seal_hash": self.seal_hash,
         }
 
 
@@ -56,6 +60,7 @@ class ContinuityState:
     Unified representation of the 4-Layer ODC state tuple:
     S = <Layer1_WAL, Layer2_CRDT, Layer3_Telemetry, Layer4_ZIL>
     """
+
     def __init__(
         self,
         node_id: str,
@@ -63,7 +68,7 @@ class ContinuityState:
         crdt_value: int,
         telemetry_mode: str,
         receipts_count: int,
-        merkle_root: str
+        merkle_root: str,
     ):
         self.node_id = node_id
         self.wal_height = wal_height
@@ -79,7 +84,7 @@ class ContinuityState:
             "crdt_value": self.crdt_value,
             "telemetry_mode": self.telemetry_mode,
             "receipts_count": self.receipts_count,
-            "merkle_root": self.merkle_root
+            "merkle_root": self.merkle_root,
         }
 
 
@@ -89,6 +94,7 @@ class ODCModel:
     Coordinates Layer 1 (Durability), Layer 2 (CRDT Mesh), Layer 3 (Telemetry),
     and Layer 4 (Zero Intent Loss) into an unbroken sovereign continuity pipeline.
     """
+
     STANDARD = "ODCS-2.0.0 GA"
     ARCHITECT = "Anirudha Puthraya"
 
@@ -100,10 +106,7 @@ class ODCModel:
         self.zil_engine = ZeroIntentLossEngine(node_id)
 
     def execute_action(
-        self,
-        action: str,
-        payload: Dict[str, Any],
-        actor: str = "user"
+        self, action: str, payload: Dict[str, Any], actor: str = "user"
     ) -> Tuple[ContinuityState, ZeroIntentLossReceipt]:
         """
         Executes an action through the verified 4-layer continuity sequence:
@@ -115,14 +118,11 @@ class ODCModel:
         """
         # Step 1: Layer 4 ZIL Receipt Minting (< 16ms guaranteed)
         zil_receipt = self.zil_engine.preserve_intent(
-            action=action,
-            payload=payload,
-            actor=actor,
-            merkle_root=self.wal.merkle_tree.root
+            action=action, payload=payload, actor=actor, merkle_root=self.wal.merkle_tree.root
         )
 
         # Step 2: Layer 1 Monotonic Merkle WAL Append
-        wal_entry = self.wal.append(action, payload, actor)
+        _wal_entry = self.wal.append(action, payload, actor)
 
         # Step 3: Layer 2 CRDT Mesh Mutation
         self.mesh_node.counter.increment(1)
@@ -136,7 +136,7 @@ class ODCModel:
             crdt_value=self.mesh_node.counter.value(),
             telemetry_mode=self.telemetry.current_mode.value,
             receipts_count=len(self.zil_engine.minted_receipts),
-            merkle_root=self.wal.merkle_tree.root
+            merkle_root=self.wal.merkle_tree.root,
         )
 
         return state, zil_receipt
@@ -148,22 +148,28 @@ class ODCModel:
             crdt_value=self.mesh_node.counter.value(),
             telemetry_mode=self.telemetry.current_mode.value,
             receipts_count=len(self.zil_engine.minted_receipts),
-            merkle_root=self.wal.merkle_tree.root
+            merkle_root=self.wal.merkle_tree.root,
         )
 
     def verify_all_invariants(self) -> bool:
         """Mathematically verifies all core invariants across all 4 layers."""
         # Invariant 1: WAL integrity and hash continuity
         if not self.wal.verify_integrity():
-            raise ContinuityInvariantError("Invariant 1 Violated: Merkle WAL hash chain desynchronized")
+            raise ContinuityInvariantError(
+                "Invariant 1 Violated: Merkle WAL hash chain desynchronized"
+            )
 
         # Invariant 2: All minted receipts must verify cryptographically
         for r in self.zil_engine.minted_receipts:
             if not r.verify():
-                raise ContinuityInvariantError(f"Invariant 2 Violated: Receipt {r.receipt_id} signature failed")
+                raise ContinuityInvariantError(
+                    f"Invariant 2 Violated: Receipt {r.receipt_id} signature failed"
+                )
 
         # Invariant 3: Receipt count must match WAL height
         if len(self.zil_engine.minted_receipts) != self.wal.current_height:
-            raise ContinuityInvariantError("Invariant 3 Violated: Mismatch between ZIL count and WAL height")
+            raise ContinuityInvariantError(
+                "Invariant 3 Violated: Mismatch between ZIL count and WAL height"
+            )
 
         return True

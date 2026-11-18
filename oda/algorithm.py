@@ -5,22 +5,25 @@ Guarantees Zero Intent Loss under arbitrary network disruptions.
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-from enum import Enum
-from typing import Dict, Any, List, Optional, Tuple, Callable
 import time
-import math
-from odc.core import ODCModel, ContinuityState
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+from odc.core import ContinuityState, ODCModel
 from odc.layer4_zil import ZeroIntentLossReceipt
 
 
 class OperationalState(str, Enum):
-    OPTIMAL_ONLINE = "OPTIMAL_ONLINE"        # Direct synchronization, single-frame confirmation
-    DEGRADED_JITTER = "DEGRADED_JITTER"      # Local authority active, background batching, jitter backoff
-    SEVERED_OFFLINE = "SEVERED_OFFLINE"      # Total carrier blackout, 100% sovereign local WAL mode
+    OPTIMAL_ONLINE = "OPTIMAL_ONLINE"  # Direct synchronization, single-frame confirmation
+    DEGRADED_JITTER = (
+        "DEGRADED_JITTER"  # Local authority active, background batching, jitter backoff
+    )
+    SEVERED_OFFLINE = "SEVERED_OFFLINE"  # Total carrier blackout, 100% sovereign local WAL mode
 
 
 class AdaptationPolicy:
     """Configurable threshold parameters for the ODA algorithm."""
+
     def __init__(
         self,
         jitter_threshold_ms: float = 25.0,
@@ -29,7 +32,7 @@ class AdaptationPolicy:
         packet_loss_threshold: float = 0.05,
         exponential_backoff_base: float = 1.5,
         max_batch_size: int = 50,
-        reconnect_settle_probes: int = 3
+        reconnect_settle_probes: int = 3,
     ):
         self.jitter_threshold_ms = jitter_threshold_ms
         self.rtt_degraded_threshold_ms = rtt_degraded_threshold_ms
@@ -45,6 +48,7 @@ class DisruptionBuffer:
     In-memory and NVMe persistent queue buffering un-dispatched actions during network partitions.
     Guarantees FIFO ordering and zero drops.
     """
+
     def __init__(self, capacity: int = 50000):
         self.capacity = capacity
         self.queue: List[Dict[str, Any]] = []
@@ -54,12 +58,14 @@ class DisruptionBuffer:
     def push(self, receipt: ZeroIntentLossReceipt, action: str, payload: Dict[str, Any]) -> None:
         if len(self.queue) >= self.capacity:
             raise OverflowError("DisruptionBuffer capacity exceeded; local NVMe spillover required")
-        self.queue.append({
-            "receipt": receipt,
-            "action": action,
-            "payload": payload,
-            "buffered_at_ns": time.time_ns()
-        })
+        self.queue.append(
+            {
+                "receipt": receipt,
+                "action": action,
+                "payload": payload,
+                "buffered_at_ns": time.time_ns(),
+            }
+        )
         self.total_buffered += 1
 
     def pop_batch(self, max_size: int) -> List[Dict[str, Any]]:
@@ -81,6 +87,7 @@ class ODAAlgorithm:
     Couples telemetry probes from Layer 3 with Zero Intent Loss execution in Layer 4
     and semi-lattice CRDT convergence in Layer 2.
     """
+
     STANDARD = "ODCS-2.0.0 GA"
     ARCHITECT = "Anirudha Puthraya"
 
@@ -124,13 +131,15 @@ class ODAAlgorithm:
         self.current_state = next_state
         return next_state
 
-    def _on_state_transition(self, from_state: OperationalState, to_state: OperationalState) -> None:
+    def _on_state_transition(
+        self, from_state: OperationalState, to_state: OperationalState
+    ) -> None:
         transition_record = {
             "from": from_state.value,
             "to": to_state.value,
             "timestamp_ns": time.time_ns(),
             "buffered_items": self.buffer.size(),
-            "rtt_ms": self.model.telemetry.last_rtt
+            "rtt_ms": self.model.telemetry.last_rtt,
         }
         self.transition_log.append(transition_record)
 
@@ -139,10 +148,7 @@ class ODAAlgorithm:
             self.reconcile_mesh()
 
     def submit_action(
-        self,
-        action: str,
-        payload: Dict[str, Any],
-        actor: str = "user"
+        self, action: str, payload: Dict[str, Any], actor: str = "user"
     ) -> Tuple[ContinuityState, ZeroIntentLossReceipt]:
         """
         Submits an action through the ODA algorithm:
@@ -188,5 +194,5 @@ class ODAAlgorithm:
             "total_flushed": self.buffer.total_flushed,
             "telemetry": self.model.telemetry.get_status(),
             "wal_height": self.model.wal.current_height,
-            "transitions_count": len(self.transition_log)
+            "transitions_count": len(self.transition_log),
         }

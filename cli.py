@@ -5,20 +5,19 @@ Interactive command line interface for executing, simulating, and verifying the 
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-import sys
-import os
 import argparse
 import json
+import os
+import sys
 import time
 
 # Add repo root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from odc.core import ODCModel, ContinuityState
-from odc.layer1_wal import canonical_json
-from oda.algorithm import ODAAlgorithm, OperationalState
-from oda.controller import ODANetworkSimulator, CarrierEnvironment
+from oda.algorithm import ODAAlgorithm
+from oda.controller import CarrierEnvironment, ODANetworkSimulator
 from oda.verifier import ODAMathematicalVerifier
+from odc.core import ODCModel
 
 
 def cmd_run(args):
@@ -37,7 +36,7 @@ def cmd_run(args):
         ("INITIALIZE_SOVEREIGN_NODE", {"role": "root_authority", "timestamp": time.time()}),
         ("CAPTURE_EMERGENCY_VITALS", {"patient": "PT-901", "heart_rate": 78, "spo2": 99}),
         ("STAGE_DISASTER_LOGISTICS", {"depot": "SECTOR-4", "supplies_units": 1400}),
-        ("SEAL_CHAIN_CHECKPOINT", {"target": "monitored_merkle_wal", "height": 4})
+        ("SEAL_CHAIN_CHECKPOINT", {"target": "monitored_merkle_wal", "height": 4}),
     ]
 
     for action, payload in actions:
@@ -70,7 +69,7 @@ def cmd_simulate(args):
         ("Satellite Jitter", CarrierEnvironment.STARLINK_SATELLITE, 5),
         ("Total Blackout", CarrierEnvironment.TOTAL_BLACKOUT, 5),
         ("Subway Tunnel", CarrierEnvironment.UNDERGROUND_SUBWAY, 5),
-        ("Fiber Restored", CarrierEnvironment.FIBER_OPTIMAL, 5)
+        ("Fiber Restored", CarrierEnvironment.FIBER_OPTIMAL, 5),
     ]
 
     seq = 0
@@ -82,9 +81,11 @@ def cmd_simulate(args):
             rtt, loss = sim.sample_carrier()
             state = oda.evaluate_telemetry(rtt, loss)
             _, rcpt = oda.submit_action(f"OP_{seq}", {"val": seq}, actor="sim_actor")
-            print(f"Step {seq:02d} | Mode: {state.value:15s} | RTT: {rtt:8.1f}ms | Buffered: {oda.buffer.size()} | ZIL: {rcpt.duration_ms:.3f}ms")
+            print(
+                f"Step {seq:02d} | Mode: {state.value:15s} | RTT: {rtt:8.1f}ms | Buffered: {oda.buffer.size()} | ZIL: {rcpt.duration_ms:.3f}ms"
+            )
 
-    print(f"\n[RECOVERY] Flushing disruption buffer...")
+    print("\n[RECOVERY] Flushing disruption buffer...")
     reconciled = oda.reconcile_mesh()
     print(f"[RECOVERY] Successfully reconciled {reconciled} buffered operations algebraically!")
     print(f"[RECOVERY] Final Buffer Size: {oda.buffer.size()} (Zero Intent Loss: 100% Retained)")
@@ -119,7 +120,9 @@ def main():
     subparsers.add_parser("simulate", help="Simulate network chaos and ODA adaptation")
 
     verify_p = subparsers.add_parser("verify", help="Run formal mathematical invariant verifier")
-    verify_p.add_argument("--iterations", type=int, default=1000, help="Number of chaotic iterations (default: 1000)")
+    verify_p.add_argument(
+        "--iterations", type=int, default=1000, help="Number of chaotic iterations (default: 1000)"
+    )
 
     args = parser.parse_args()
     if args.command == "run":

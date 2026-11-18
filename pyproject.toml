@@ -35,3 +35,22 @@ Issues = "https://github.com/Veyra-Programming/odc-model-algorithm/issues"
 
 [project.scripts]
 odc = "cli:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

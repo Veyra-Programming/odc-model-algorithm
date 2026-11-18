@@ -9,7 +9,8 @@ Standard Specification & Architecture by Anirudha Puthraya.
 
 import time
 import uuid
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from .layer1_wal import canonical_json, compute_sha256
 
 
@@ -18,6 +19,7 @@ class ZeroIntentLossReceipt:
     Cryptographically sealed receipt proving an action was committed locally
     with Zero Intent Loss under 16ms before any remote network call.
     """
+
     def __init__(
         self,
         receipt_id: str,
@@ -27,7 +29,7 @@ class ZeroIntentLossReceipt:
         timestamp_ns: int,
         duration_ms: float,
         signature: str,
-        merkle_root: Optional[str] = None
+        merkle_root: Optional[str] = None,
     ):
         self.receipt_id = receipt_id
         self.action = action
@@ -45,7 +47,7 @@ class ZeroIntentLossReceipt:
             "action": self.action,
             "actor": self.actor,
             "payload_hash": self.payload_hash,
-            "timestamp_ns": self.timestamp_ns
+            "timestamp_ns": self.timestamp_ns,
         }
         expected_sig = compute_sha256(canonical_json(expected_data))
         return self.signature == expected_sig
@@ -60,7 +62,7 @@ class ZeroIntentLossReceipt:
             "duration_ms": self.duration_ms,
             "signature": self.signature,
             "merkle_root": self.merkle_root,
-            "verified": self.verify()
+            "verified": self.verify(),
         }
 
 
@@ -69,6 +71,7 @@ class ZeroIntentLossEngine:
     High-speed hardware authority engine minting tamper-evident ZIL receipts.
     Guarantees latency < 16ms (typically < 0.15ms on modern hardware).
     """
+
     def __init__(self, node_id: str):
         self.node_id = node_id
         self.minted_receipts: List[ZeroIntentLossReceipt] = []
@@ -78,7 +81,7 @@ class ZeroIntentLossEngine:
         action: str,
         payload: Dict[str, Any],
         actor: str = "user",
-        merkle_root: Optional[str] = None
+        merkle_root: Optional[str] = None,
     ) -> ZeroIntentLossReceipt:
         start_ns = time.monotonic_ns()
 
@@ -96,7 +99,7 @@ class ZeroIntentLossEngine:
             "action": action,
             "actor": actor,
             "payload_hash": payload_hash,
-            "timestamp_ns": timestamp_ns
+            "timestamp_ns": timestamp_ns,
         }
         signature = compute_sha256(canonical_json(receipt_data))
 
@@ -105,7 +108,9 @@ class ZeroIntentLossEngine:
 
         # Enforce sub-16ms invariant check
         if duration_ms > 16.66:
-            raise TimeoutError(f"ZIL Invariant Violated: duration {duration_ms}ms exceeded 16.66ms ceiling")
+            raise TimeoutError(
+                f"ZIL Invariant Violated: duration {duration_ms}ms exceeded 16.66ms ceiling"
+            )
 
         receipt = ZeroIntentLossReceipt(
             receipt_id=receipt_uuid,
@@ -115,7 +120,7 @@ class ZeroIntentLossEngine:
             timestamp_ns=timestamp_ns,
             duration_ms=duration_ms,
             signature=signature,
-            merkle_root=merkle_root
+            merkle_root=merkle_root,
         )
 
         self.minted_receipts.append(receipt)

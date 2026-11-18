@@ -4,16 +4,15 @@ Tests state transitions, buffer draining, network blackout failover, and mathema
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from odc.core import ODCModel
-from oda.algorithm import ODAAlgorithm, OperationalState, AdaptationPolicy
-from oda.controller import ODANetworkSimulator, CarrierEnvironment
+from oda.algorithm import ODAAlgorithm, OperationalState
 from oda.verifier import ODAMathematicalVerifier
+from odc.core import ODCModel
 
 
 class TestODAAlgorithm(unittest.TestCase):
@@ -30,7 +29,7 @@ class TestODAAlgorithm(unittest.TestCase):
         self.assertEqual(state, OperationalState.DEGRADED_JITTER)
 
         # 3. Inject total blackout (carrier cut)
-        state = self.oda.evaluate_telemetry(rtt_ms=float('inf'), packet_loss=1.0)
+        state = self.oda.evaluate_telemetry(rtt_ms=float("inf"), packet_loss=1.0)
         self.assertEqual(state, OperationalState.SEVERED_OFFLINE)
 
         # 4. Settle back to optimal (requires 3 consecutive good probes by policy)
@@ -40,7 +39,7 @@ class TestODAAlgorithm(unittest.TestCase):
 
     def test_disruption_buffer_and_drain(self):
         # Cut carrier
-        self.oda.evaluate_telemetry(rtt_ms=float('inf'), packet_loss=1.0)
+        self.oda.evaluate_telemetry(rtt_ms=float("inf"), packet_loss=1.0)
         self.assertEqual(self.oda.current_state, OperationalState.SEVERED_OFFLINE)
 
         # Submit 25 operations during blackout

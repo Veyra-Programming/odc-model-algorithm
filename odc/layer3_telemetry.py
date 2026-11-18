@@ -5,20 +5,23 @@ and real-time operational mode classification.
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-from enum import Enum
 import time
-from typing import Dict, Any, List, Optional
+from enum import Enum
+from typing import Any, Dict, List
 
 
 class TelemetryMode(str, Enum):
-    OPTIMAL_ONLINE = "OPTIMAL_ONLINE"        # RTT <= 80ms, Jitter <= 15ms
-    DEGRADED_JITTER = "DEGRADED_JITTER"      # 80ms < RTT < 2000ms, or jitter > 15ms
-    SEVERED_OFFLINE = "SEVERED_OFFLINE"      # Carrier cut, timeout > 2000ms, or RTT = inf
+    OPTIMAL_ONLINE = "OPTIMAL_ONLINE"  # RTT <= 80ms, Jitter <= 15ms
+    DEGRADED_JITTER = "DEGRADED_JITTER"  # 80ms < RTT < 2000ms, or jitter > 15ms
+    SEVERED_OFFLINE = "SEVERED_OFFLINE"  # Carrier cut, timeout > 2000ms, or RTT = inf
 
 
 class TelemetrySample:
     """Individual carrier wave telemetry observation."""
-    def __init__(self, timestamp_ns: int, rtt_ms: float, jitter_ms: float, packet_loss: float = 0.0):
+
+    def __init__(
+        self, timestamp_ns: int, rtt_ms: float, jitter_ms: float, packet_loss: float = 0.0
+    ):
         self.timestamp_ns = timestamp_ns
         self.rtt_ms = rtt_ms
         self.jitter_ms = jitter_ms
@@ -29,7 +32,7 @@ class TelemetrySample:
             "timestamp_ns": self.timestamp_ns,
             "rtt_ms": self.rtt_ms,
             "jitter_ms": self.jitter_ms,
-            "packet_loss": self.packet_loss
+            "packet_loss": self.packet_loss,
         }
 
 
@@ -40,6 +43,7 @@ class CarrierTelemetryProbe:
     EMA_RTT_t = (1 - alpha) * EMA_RTT_{t-1} + alpha * RTT_t
     EMA_Jitter_t = (1 - beta) * EMA_Jitter_{t-1} + beta * |RTT_t - RTT_{t-1}|
     """
+
     def __init__(self, alpha: float = 0.125, beta: float = 0.25):
         self.alpha = alpha
         self.beta = beta
@@ -53,13 +57,13 @@ class CarrierTelemetryProbe:
     def record_probe(self, rtt_ms: float, packet_loss: float = 0.0) -> TelemetryMode:
         now_ns = time.monotonic_ns()
 
-        if rtt_ms == float('inf') or rtt_ms > 2000.0 or packet_loss >= 0.5:
+        if rtt_ms == float("inf") or rtt_ms > 2000.0 or packet_loss >= 0.5:
             # Severed offline partition
             instant_jitter = 0.0
             self.current_mode = TelemetryMode.SEVERED_OFFLINE
-            self.ema_rtt = float('inf')
+            self.ema_rtt = float("inf")
         else:
-            if self.ema_rtt == float('inf') or self.last_rtt == float('inf'):
+            if self.ema_rtt == float("inf") or self.last_rtt == float("inf"):
                 self.ema_rtt = rtt_ms
                 self.last_rtt = rtt_ms
                 self.ema_jitter = 0.0
@@ -86,7 +90,7 @@ class CarrierTelemetryProbe:
     def get_status(self) -> Dict[str, Any]:
         return {
             "mode": self.current_mode.value,
-            "ema_rtt_ms": round(self.ema_rtt, 3) if self.ema_rtt != float('inf') else "∞",
+            "ema_rtt_ms": round(self.ema_rtt, 3) if self.ema_rtt != float("inf") else "∞",
             "ema_jitter_ms": round(self.ema_jitter, 3),
-            "samples_count": len(self.history)
+            "samples_count": len(self.history),
         }

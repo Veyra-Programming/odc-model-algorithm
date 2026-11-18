@@ -5,9 +5,9 @@ without central locks or single points of failure across network partitions.
 Standard Specification & Architecture by Anirudha Puthraya.
 """
 
-from typing import Any, Dict, Set, Tuple, Optional
 import time
 import uuid
+from typing import Any, Dict, Set
 
 
 class PNCounter:
@@ -16,6 +16,7 @@ class PNCounter:
     Supports concurrent increments and decrements across arbitrary replicas.
     Merge operation computes the least upper bound (supremum) via component-wise maximum.
     """
+
     def __init__(self, node_id: str):
         self.node_id = node_id
         self.p_map: Dict[str, int] = {node_id: 0}
@@ -38,8 +39,12 @@ class PNCounter:
 
     def merge(self, other: "PNCounter") -> "PNCounter":
         """Component-wise supremum: join(A, B) = max(A.p, B.p) - max(A.n, B.n)"""
-        all_nodes = set(self.p_map.keys()) | set(other.p_map.keys()) | \
-                    set(self.n_map.keys()) | set(other.n_map.keys())
+        all_nodes = (
+            set(self.p_map.keys())
+            | set(other.p_map.keys())
+            | set(self.n_map.keys())
+            | set(other.n_map.keys())
+        )
 
         merged = PNCounter(self.node_id)
         merged.p_map = {n: max(self.p_map.get(n, 0), other.p_map.get(n, 0)) for n in all_nodes}
@@ -52,7 +57,7 @@ class PNCounter:
             "node_id": self.node_id,
             "value": self.value(),
             "p_map": self.p_map,
-            "n_map": self.n_map
+            "n_map": self.n_map,
         }
 
 
@@ -62,6 +67,7 @@ class AddWinsORSet:
     Concurrent adds and removes are resolved such that adds win over concurrent deletes.
     Elements are tagged with unique causal UUID tags.
     """
+
     def __init__(self, node_id: str):
         self.node_id = node_id
         # Map of element -> Set of active causal UUID tags
@@ -109,7 +115,7 @@ class AddWinsORSet:
             "type": "AddWinsORSet",
             "node_id": self.node_id,
             "elements": sorted(list(self.elements()), key=str),
-            "tombstones_count": len(self.tombstones)
+            "tombstones_count": len(self.tombstones),
         }
 
 
@@ -118,6 +124,7 @@ class LWWRegister:
     Last-Write-Wins Register (LWW-Register) CvRDT.
     Concurrent values are ordered by monotonic timestamps with deterministic node tie-breaking.
     """
+
     def __init__(self, node_id: str, initial_value: Any = None):
         self.node_id = node_id
         self.value = initial_value
@@ -151,6 +158,7 @@ class CRDTMeshNode:
     Autonomous node in a distributed disruption-tolerant CRDT mesh.
     Manages local CRDT state and synchronizes algebraically with peers.
     """
+
     def __init__(self, node_id: str):
         self.node_id = node_id
         self.counter = PNCounter(node_id)
